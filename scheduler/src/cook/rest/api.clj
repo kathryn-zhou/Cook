@@ -687,13 +687,13 @@
        first
        :container))
 
- (defn get-gpu-models-on-pool
-    "Given a pool name, determine the supported GPU models on that pool."
-    [valid-gpu-models effective-pool-name]
-    (->> valid-gpu-models
-    (filter (fn [{:keys [pool-regex]}]) (re-find (re-pattern pool-regex) effective-pool-name))
-               first
-               :valid-models))
+(defn get-gpu-models-on-pool
+   "Given a pool name, determine the supported GPU models on that pool."
+   [valid-gpu-models effective-pool-name]
+   (->> valid-gpu-models
+        (filter (fn [{:keys [pool-regex]}] (re-find (re-pattern pool-regex) effective-pool-name)))
+        first
+        :valid-models))
 
 (s/defn make-job-txn
   "Creates the necessary txn data to insert a job into the database"
