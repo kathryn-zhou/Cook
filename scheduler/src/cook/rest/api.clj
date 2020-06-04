@@ -966,6 +966,11 @@
     (s/validate Job munged)
     (when (and (:gpus munged) (not gpu-enabled?))
       (throw (ex-info (str "GPU support is not enabled") {:gpus gpus})))
+
+    (when (and (get env "COOK_GPU_MODEL")
+                (not contains? valid-gpu-models (get env "COOK_GPU_MODEL")))
+      (throw (ex-info (str "The following GPU model is not supported: " (get env "COOK_GPU_MODEL")))
+
     (when (> cpus (:cpus task-constraints))
       (throw (ex-info (str "Requested " cpus " cpus, but only allowed to use "
                            (:cpus task-constraints))
