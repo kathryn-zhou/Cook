@@ -87,7 +87,7 @@
                                                      :force-pull-image false
                                                      :parameters []}}}]
         :valid-gpu-models
-        [{:pool-regex "k8s-ondemand" :valid-models #{"nvidia-tesla-k80" "nvidia-tesla-p100" "nvidia-tesla-p4" "nvidia-tesla-v100" "nvidia-tesla-t4"}}]}
+        [{:pool-regex "k8s-ondemand" :valid-models #{"nvidia-tesla-k80" "nvidia-tesla-p100"}}]}
  :port #config/env-int "COOK_PORT"
  :ssl {:port #config/env-int "COOK_SSL_PORT"
        :keystore-path #config/env "COOK_KEYSTORE_PATH"
