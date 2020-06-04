@@ -687,6 +687,14 @@
        first
        :container))
 
+ (defn get-gpu-models-on-pool
+    "Given a pool name, determine the supported GPU models on that pool."
+    [valid-gpu-models effective-pool-name]
+    (->> valid-gpu-models
+    (filter (fn [{:keys [pool-regex]}]) (re-find (re-pattern pool-regex) effective-pool-name))
+               first
+               :valid-models))
+
 (s/defn make-job-txn
   "Creates the necessary txn data to insert a job into the database"
   [pool commit-latch-id db job :- Job]
@@ -968,8 +976,8 @@
       (throw (ex-info (str "GPU support is not enabled") {:gpus gpus})))
 
     (when (and (get env "COOK_GPU_MODEL")
-                (not contains? valid-gpu-models (get env "COOK_GPU_MODEL")))
-      (throw (ex-info (str "The following GPU model is not supported: " (get env "COOK_GPU_MODEL")))
+                (not contains? (get-gpu-models-on-pool) (get env "COOK_GPU_MODEL")))
+      (throw (ex-info (str "The following GPU model is not supported: " (get env "COOK_GPU_MODEL")))))
 
     (when (> cpus (:cpus task-constraints))
       (throw (ex-info (str "Requested " cpus " cpus, but only allowed to use "
