@@ -920,6 +920,13 @@
                 (assoc :partitions (into #{} (walk/stringify-keys partitions))))))
        (into #{})))
 
+(defn validate-job-gpu-model
+  "TODO(Kathryn)"
+  [pool-name {:keys [env]}]
+  (when (and (get env "COOK_GPU_MODEL")
+             (not (contains? (get-gpu-models-on-pool (config/valid-gpu-models) pool-name) (get env "COOK_GPU_MODEL"))))
+    (throw (ex-info (str "The following GPU model is not supported: " (get env "COOK_GPU_MODEL")) {}))))
+
 (defn validate-and-munge-job
   "Takes the user, the parsed json from the job and a list of the uuids of
    new-groups (submitted in the same request as the job). Returns proper Job
@@ -974,9 +981,7 @@
     (s/validate Job munged)
     (when (and (:gpus munged) (not gpu-enabled?))
       (throw (ex-info (str "GPU support is not enabled") {:gpus gpus})))
-    (when (and (get env "COOK_GPU_MODEL")
-                (not (contains? (get-gpu-models-on-pool (config/valid-gpu-models) pool-name) (get env "COOK_GPU_MODEL"))))
-      (throw (ex-info (str "The following GPU model is not supported: " (get env "COOK_GPU_MODEL")))))
+    (validate-job-gpu-model pool-name job)
     (when (> cpus (:cpus task-constraints))
       (throw (ex-info (str "Requested " cpus " cpus, but only allowed to use "
                            (:cpus task-constraints))
