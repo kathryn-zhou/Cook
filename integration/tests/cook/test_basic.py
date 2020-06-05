@@ -1857,6 +1857,50 @@ class CookTest(util.CookTest):
         job = util.wait_for_job(self.cook_url, job_uuid, 'completed')
         self.assertIn('success', [i['status'] for i in job['instances']])
 
+    @unittest.skipUnless(util.default_submit_pool() is not None, "Test requires a default test pool")
+    def test_request_gpu_models(self):
+        settings_dict = util.settings(self.cook_url)
+        valid_gpu_models_config_map = settings_dict.get("pools", {}).get("valid-gpu-models", [])
+        if valid_gpu_models_config_map:
+            default_pool = os.getenv('COOK_TEST_GPU_POOL') or util.default_submit_pool()
+            matching_gpu_models = [ii["valid-models"] for ii in valid_gpu_models_config_map if
+                            re.match(ii["pool-regex"], default_pool)]
+            if len(matching_gpu_models) == 0:
+                job_uuid, resp = util.submit_job(
+                    self.cook_url, 
+                    gpus=1,
+                    env={'COOK_GPU_MODEL':'nvidia-tesla-p100'})
+                self.assertEqual(resp.status_code, 400)
+                self.assertTrue(b"There are no GPU models in this pool" in resp.content, msg=resp.content)
+
+            else:
+                # Request using the first valid GPU model
+                expected_model = matching_gpu_models[0][0]
+                job_uuid, resp = util.submit_job(
+                    self.cook_url, 
+                    gpus=1,
+                    env={'COOK_GPU_MODEL': expected_model})                       
+                self.assertEqual(resp.status_code, 201, resp.text)
+                job = util.load_job(self.cook_url, job_uuid)
+                self.assertEqual(job["env"]["COOK_GPU_MODEL"], expected_model)
+
+                # Request using an invalid GPU model
+                job_uuid, resp = util.submit_job(
+                    self.cook_url, 
+                    gpus=1,
+                    env={'COOK_GPU_MODEL': "invalid-model"})                       
+                self.assertEqual(resp.status_code, 400, resp.text)
+                self.assertTrue(b"The following GPU model is not supported: invalid-model" in resp.content, msg=resp.content)
+
+        else:
+            job_uuid, resp = util.submit_job(
+                self.cook_url, 
+                gpus=1,
+                env={'COOK_GPU_MODEL': "nvidia-tesla-p100"})
+            self.assertEqual(resp.status_code, 400)
+            self.assertTrue(b"GPU support is not enabled" in resp.content, msg=resp.content)
+
+
     @unittest.skipUnless(util.docker_tests_enabled(), "Requires we're in an environment that requires docker images.")
     @unittest.skipUnless(util.default_submit_pool() is not None, "Test requires a default test pool")
     def test_default_container_for_pool(self):

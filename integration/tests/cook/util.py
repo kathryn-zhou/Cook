@@ -460,7 +460,6 @@ def docker_working_directory():
 def get_default_cpus():
     return float(os.getenv('COOK_DEFAULT_JOB_CPUS', 0.05))
 
-
 def make_temporal_uuid():
     """Make a UUID object that has a datestamp as its prefix. The datestamp being yymmddhh. This will cluster
     UUID's in a temporal manner, so jobs submitted on the same day or week will be clustered together in the
@@ -1571,7 +1570,6 @@ def is_preemption_enabled():
     """Returns true if task preemption is enabled on the cluster"""
     max_preemption = rebalancer_settings().get('max-preemption')
     return max_preemption is not None
-
 
 @functools.lru_cache()
 def rebalancer_settings():
